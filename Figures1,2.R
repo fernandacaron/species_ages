@@ -5,6 +5,9 @@ library(geiger)
 library(vioplot)
 library(viridis)
 
+## Phylogenies and taxonomies used here were retrieved from VertLife 
+## (https://data.vertlife.org)
+
 ## This function will calculate the tip ages of one or more trees and make a
 ## matrix with the species ages for each tree, the species name, the genus, and 
 ## the class that they belong to
@@ -72,7 +75,7 @@ tip_ages <- function(tree, class) {
 }
 
 ## Loading the phylogenies and taxonomies that were used to produce these 
-## phylogenies
+## phylogenies    
 tr_am <- read.nexus("amphibia27JUL2020.nex")
 for (i in 1:length(tr_am)) tr_am[[i]] <- drop.tip(tr_am[[i]], "Homo_sapiens")
 tr_sq <- read.nexus("squamata27JUL20.nex")
