@@ -6,7 +6,8 @@ library(vioplot)
 library(viridis)
 
 ## This function will calculate the tip ages of one or more trees and make a
-## matrix with the species ages for each tree, the species name, the genus, and ## the class that they belong to
+## matrix with the species ages for each tree, the species name, the genus, and 
+## the class that they belong to
 tip_ages <- function(tree, class) {
 
 	if (class(tree) == "multiPhylo") {
