@@ -1,16 +1,15 @@
 rm(list = ls())
 
+setwd("~/Documents/lab/spp_ages")
+
 library(phytools)
 library(geiger)
 library(vioplot)
 library(viridis)
 
-## Phylogenies and taxonomies used here were retrieved from VertLife 
-## (https://data.vertlife.org)
-
-## This function will calculate the tip ages of one or more trees and make a
-## matrix with the species ages for each tree, the species name, the genus, and 
-## the class that they belong to
+# This function will calculate the tip ages of one or more trees and make a
+# matrix with the species ages for each tree, the species name, the genus, and
+# the class that they belong to
 tip_ages <- function(tree, class) {
 
 	if (class(tree) == "multiPhylo") {
@@ -74,42 +73,42 @@ tip_ages <- function(tree, class) {
 
 }
 
-## Loading the phylogenies and taxonomies that were used to produce these 
-## phylogenies    
-tr_am <- read.nexus("amphibia27JUL2020.nex")
-for (i in 1:length(tr_am)) tr_am[[i]] <- drop.tip(tr_am[[i]], "Homo_sapiens")
-tr_sq <- read.nexus("squamata27JUL20.nex")
-tr_av <- read.nexus("aves_Ericson_27_JUL_20.nex")
-tr_ma <- read.nexus("mammalia_node_dated_27JUL2020.nex")
+# Loading the phylogenies and taxonomies that were used to produce them
+tr_sq <- read.nexus("~/Documents/lab/data/trees/amphibia_VertLife_27JUL20.nex")
+for (i in 1:length(tr_sq)) tr_sq[[i]] <- drop.tip(tr_sq[[i]], "Homo_sapiens")
+tr_sq <- read.nexus("~/Documents/lab/data/trees/squamata_VertLife_27JUL20.nex")
+tr_av <- read.nexus("~/Documents/lab/data/trees/aves_Ericson_VertLife_27JUL20.nex")
+tr_ma <- read.nexus("~/Documents/lab/data/trees/mammalia_node_dated_VertLife_27JUL20.nex")
 
-dat_am <- read.csv("amph_shl_new_Classification.csv", stringsAsFactors = F)
+dat_am <- read.csv("data/amph_shl_new_Classification.csv", 
+                   stringsAsFactors = F)
 dat_am$Scientific.Name <- gsub(" ", "_", dat_am$Scientific.Name)
 dat_am <- dat_am[! grepl("Homo_sapiens", dat_am$Scientific.Name), ]
 
-dat_sq <- read.csv("squam_shl_new_Classification.csv", 
+dat_sq <- read.csv("data/squam_shl_new_Classification.csv", 
                    stringsAsFactors = F)
 dat_sq$Species <- gsub(" ", "_", dat_sq$Species)
 
-dat_av <- read.csv("BLIOCPhyloMasterTax_birds.csv", stringsAsFactors = F)
+dat_av <- read.csv("data/BLIOCPhyloMasterTax_birds.csv", 
+                   stringsAsFactors = F)
 dat_av$Scientific <- gsub(" ", "_", dat_av$Scientific)
 
-dat_ma <- read.csv("taxonomy_mamPhy_5911species.csv", stringsAsFactors = F)
+dat_ma <- read.csv("data/taxonomy_mamPhy_5911species.csv", 
+                   stringsAsFactors = F)
 
 
-## Species ages for Amphibia
-
+# Species ages for Amphibia
 ages_amphibia <- tip_ages(tr_am, "Amphibia")
 colnames(ages_amphibia) <- c("Class", "Taxon", "Genus", "Species", 
                              1:length(tr_am))
 
-## Getting the orders of each species
+# Getting the orders of each species
 for (i in 1:nrow(ages_amphibia)) {
 	ages_amphibia[i, 2] <- dat_am$Taxon[dat_am$Scientific.Name == 
 											ages_amphibia[i, 4]]
 }
 
-## Species ages for Squamata
-
+# Species ages for Squamata
 Anguimorpha <- c("Anguidae", "Anniellidae", "Diploglossidae", "Helodermatidae",
                  "Lanthanotidae", "Shinisauridae", "Varanidae", "Xenosauridae")
 Lacertoidea <- c("Amphisbaenidae", "Bipedidae", "Blanidae", "Cadeidae", 
@@ -128,8 +127,7 @@ ages_squamata <- tip_ages(tr_sq, "Reptilia")
 colnames(ages_squamata) <- c("Class", "Taxon", "Genus", "Species", 
                              1:length(tr_sq))
 
-## Getting the subclades of each species
-
+# Getting the subclades of each species
 for (i in 1:nrow(ages_squamata)) {
 	ages_squamata[i, 2] <- ifelse(dat_sq$Family[dat_sq$Species == 
 											ages_squamata[i, 4]] %in%
@@ -157,12 +155,11 @@ for (i in 1:nrow(ages_squamata)) {
 												))))))
 }
 
-## Species ages for Aves
+# Species ages for Aves
 ages_aves <- tip_ages(tr_av, "Aves")
 colnames(ages_aves) <- c("Class", "Taxon", "Genus", "Species", 1:length(tr_av))
 
-## Getting the orders of each species
-
+# Getting the orders of each species
 firstup <- function(x) {
 	x <- tolower(x)
 	substr(x, 1, 1) <- toupper(substr(x, 1, 1))
@@ -174,13 +171,12 @@ for (i in 1:nrow(ages_aves)) {
 															ages_aves[i, 4]])
 }
 
-## Species ages for Mammalia
+# Species ages for Mammalia
 ages_mammalia <- tip_ages(tr_ma, "Mammalia")
 colnames(ages_mammalia) <- c("Class", "Taxon", "Genus", "Species", 
                              1:length(tr_ma))
 
-## Getting the orders of each species
-
+# Getting the orders of each species
 for (i in 1:nrow(ages_mammalia)) {
 	ages_mammalia[i, 2] <- firstup(dat_ma$ord[dat_ma$Species_Name == 
 														ages_mammalia[i, 4]])
@@ -188,21 +184,19 @@ for (i in 1:nrow(ages_mammalia)) {
 
 ages <- rbind(ages_amphibia, ages_squamata, ages_aves, ages_mammalia)
 
-write.csv(ages, "ages.csv", row.names = FALSE)
+write.csv(ages, "tables/ages.csv", row.names = FALSE)
 
-###############
+# Repeting analyzes randomly pruning 1.25, 2.5, 5% of the tips of the
+# phylogenies to consider incomplete sampling 
 
-## Repeting analyzes randomly pruning 1.25, 2.5, 5% of the tips of the
-## phylogenies to consider incomplete sampling 
+# Amphibia
 
-## Amphibia
-
-## Getting 1.25, 2.5, 5% of the tips 
+# Getting 1.25, 2.5, 5% of the tips 
 p1_am <- round(0.0125*length(tr_am[[1]]$tip))
 p2_am <- round(0.025*length(tr_am[[1]]$tip))
 p3_am <- round(0.05*length(tr_am[[1]]$tip))
 
-## Dropping the tips that were not sampled
+# Dropping the tips that were not sampled
 tr1_am <- tr2_am <- tr3_am <- list()
 for (i in 1:length(tr_am)) {
 	tr1_am[[i]] <- drop.tip(tr_am[[i]], sample(tr_am[[i]]$tip.label)[1:p1_am])
@@ -211,7 +205,7 @@ for (i in 1:length(tr_am)) {
 }
 class(tr1_am) <- class(tr2_am) <- class(tr3_am) <-"multiPhylo"
 
-## Calculating species ages for each pruned topology
+# Calculating species ages for each pruned topology
 ages1_amphibia <- tip_ages(tr1_am, "Amphibia")
 colnames(ages1_amphibia) <- c("Class", "Taxon", "Genus", "Species", 
                               1:length(tr_am))
@@ -225,8 +219,7 @@ colnames(ages3_amphibia) <- c("Class", "Taxon", "Genus", "Species",
                               1:length(tr_am))
 
 
-## Repeting for Squamata
-
+# Repeting for Squamata
 p1_sq <- round(0.0125*length(tr_sq[[1]]$tip))
 p2_sq <- round(0.025*length(tr_sq[[1]]$tip))
 p3_sq <- round(0.05*length(tr_sq[[1]]$tip))
@@ -251,8 +244,7 @@ ages3_squamata <- tip_ages(tr3_sq, "Reptilia")
 colnames(ages3_squamata) <- c("Class", "Taxon", "Genus", "Species", 
                               1:length(tr_sq))
 
-## Aves
-
+# Aves
 p1_av <- round(0.0125*length(tr_av[[1]]$tip))
 p2_av <- round(0.025*length(tr_av[[1]]$tip))
 p3_av <- round(0.05*length(tr_av[[1]]$tip))
@@ -274,8 +266,7 @@ colnames(ages2_aves) <- c("Class", "Taxon", "Genus", "Species", 1:length(tr_av))
 ages3_aves <- tip_ages(tr3_av, "Aves")
 colnames(ages3_aves) <- c("Class", "Taxon", "Genus", "Species", 1:length(tr_av))
 
-## Mammalia
-
+# Mammalia
 p1_ma <- round(0.0125*length(tr_ma[[1]]$tip))
 p2_ma <- round(0.025*length(tr_ma[[1]]$tip))
 p3_ma <- round(0.05*length(tr_ma[[1]]$tip))
@@ -302,26 +293,26 @@ colnames(ages3_mammalia) <- c("Class", "Taxon", "Genus", "Species",
 
 
 ages1 <- rbind(ages1_amphibia, ages1_squamata, ages1_aves, ages1_mammalia)
-write.csv(ages1, "ages_0.0125.csv", row.names = FALSE)
+write.csv(ages1, "tables/ages_0.0125.csv", row.names = FALSE)
 
 ages2 <- rbind(ages2_amphibia, ages2_squamata, ages2_aves, ages2_mammalia)
-write.csv(ages2, "ages_0.025.csv", row.names = FALSE)
+write.csv(ages2, "tables/ages_0.025.csv", row.names = FALSE)
 
 ages3 <- rbind(ages3_amphibia, ages3_squamata, ages3_aves, ages3_mammalia)
-write.csv(ages3, "ages_0.05.csv", row.names = FALSE)
+write.csv(ages3, "tables/ages_0.05.csv", row.names = FALSE)
 
-######################
+###########
 
-## Figure 1 
+# Figure 1 
 
-ages <- read.csv("ages.csv")
-ages1 <- read.csv("ages_0.0125.csv")
-ages2 <- read.csv("ages_0.025.csv")
-ages3 <- read.csv("ages_0.05.csv")
+ages <- read.csv("tables/ages.csv")
+ages1 <- read.csv("tables/ages_0.0125.csv")
+ages2 <- read.csv("tables/ages_0.025.csv")
+ages3 <- read.csv("tables/ages_0.05.csv")
 
-## This function will calculate the average species ages for each topology, 
-## using log10 to transform the data or not. In this case, the average is taken
-## for each class.
+# This function will calculate the average species ages for each topology, 
+# using log10 to transform the data or not. In this case, the average is taken
+# for each class.
 ageCalc_sim <- function(dataset, name, log = TRUE) {
 	ntree <- 4+length(tr_am)
 	data <- as.data.frame(subset(dataset, dataset[, 1] == name, c(1, 5:ntree)))
@@ -348,7 +339,7 @@ ageCalc_sim <- function(dataset, name, log = TRUE) {
 	}
 }
 
-## Average species ages for the phylogenies not pruned
+# Average species ages for the phylogenies not pruned
 res0 <- rbind(
 	ageCalc_sim(ages, "Amphibia", log = FALSE),
 	ageCalc_sim(ages, "Reptilia", log = FALSE),
@@ -356,7 +347,7 @@ res0 <- rbind(
 	ageCalc_sim(ages, "Mammalia", log = FALSE)
 )
 
-## Average species ages for the pruned phylogenies
+# Average species ages for the pruned phylogenies
 res1 <- rbind(
 	ageCalc_sim(ages1, "Amphibia", log = FALSE),
 	ageCalc_sim(ages1, "Reptilia", log = FALSE),
@@ -383,9 +374,9 @@ res1 <- as.data.frame(res1)
 res2 <- as.data.frame(res2)
 res3 <- as.data.frame(res3)
 
-## Plotting the violin plots 
+# Plotting the violin plots 
 
-pdf("Figure1.pdf", height = 5)
+pdf("figures/Figure1.pdf", height = 5)
 
 cols_alpha <- c(rgb(48/255, 18/255, 59/255, 0.4),
                 rgb(26/255, 228/255, 182/255, 0.4),
@@ -397,39 +388,43 @@ cols <- turbo(4)
 
 par(mar = c(4, 8, 2, 3))
 
-vioplot(as.numeric(res0[res0$taxa=="Amphibia", 1]),
-	   as.numeric(res0[res0$taxa=="Reptilia", 1]),
-	   as.numeric(res0[res0$taxa=="Aves", 1]),
-	   as.numeric(res0[res0$taxa=="Mammalia", 1]),
-	   col = cols_alpha, horizontal = T, xaxt = "n", border = cols, ylog = TRUE)
+vioplot(as.numeric(res0[res0$taxa == "Amphibia", 1]),
+	   as.numeric(res0[res0$taxa == "Reptilia", 1]),
+	   as.numeric(res0[res0$taxa == "Aves", 1]),
+	   as.numeric(res0[res0$taxa == "Mammalia", 1]),
+	   col = cols_alpha, horizontal = T, xaxt = "n", border = cols, 
+	   ylog = TRUE)
 
-vioplot(as.numeric(res1[res1$taxa=="Amphibia", 1]),
-	   as.numeric(res1[res1$taxa=="Reptilia", 1]),
-	   as.numeric(res1[res1$taxa=="Aves", 1]),
-	   as.numeric(res1[res1$taxa=="Mammalia", 1]), 
-	   add = T, col = cols_alpha, horizontal = T, border = cols, ylog = TRUE)
+vioplot(as.numeric(res1[res1$taxa == "Amphibia", 1]),
+	   as.numeric(res1[res1$taxa == "Reptilia", 1]),
+	   as.numeric(res1[res1$taxa == "Aves", 1]),
+	   as.numeric(res1[res1$taxa == "Mammalia", 1]), 
+	   add = T, col = cols_alpha, horizontal = T, border = cols, 
+	   ylog = TRUE)
 
-vioplot(as.numeric(res2[res2$taxa=="Amphibia", 1]),
-	   as.numeric(res2[res2$taxa=="Reptilia", 1]),
-	   as.numeric(res2[res2$taxa=="Aves", 1]),
-	   as.numeric(res2[res2$taxa=="Mammalia", 1]), 
-	   add = T, col = cols_alpha, horizontal = T, border = cols, ylog = TRUE)
+vioplot(as.numeric(res2[res2$taxa == "Amphibia", 1]),
+	   as.numeric(res2[res2$taxa == "Reptilia", 1]),
+	   as.numeric(res2[res2$taxa == "Aves", 1]),
+	   as.numeric(res2[res2$taxa == "Mammalia", 1]), 
+	   add = T, col = cols_alpha, horizontal = T, border = cols, 
+	   ylog = TRUE)
 
-vioplot(as.numeric(res3[res3$taxa=="Amphibia", 1]),
-	   as.numeric(res3[res3$taxa=="Reptilia", 1]),
-	   as.numeric(res3[res3$taxa=="Aves", 1]),
-	   as.numeric(res3[res3$taxa=="Mammalia", 1]), 
-	   add = T, col = cols_alpha, horizontal = T, border = cols, ylog = TRUE)
+vioplot(as.numeric(res3[res3$taxa == "Amphibia", 1]),
+	   as.numeric(res3[res3$taxa == "Reptilia", 1]),
+	   as.numeric(res3[res3$taxa == "Aves", 1]),
+	   as.numeric(res3[res3$taxa == "Mammalia", 1]), 
+	   add = T, col = cols_alpha, horizontal = T, border = cols, 
+	   ylog = TRUE)
 axis(2, at = c(1:4), labels = c("Amphibia", "Squamata", "Aves",
                                 "Mammalia"), las = 2)
 
 dev.off()
 
 
-## Figure 2
+# Figure 2
 
-## This function will also calculate the average species ages, but now for 
-## different orders/subclades
+# This function will also calculate the average species ages, but now for 
+# different orders/subclades
 ageCalc <- function(dataset, name, log = TRUE) {
 	data <- dataset[dataset[, 2] == name, ]
 	data <- as.data.frame(data[complete.cases(data), ])
@@ -479,7 +474,7 @@ res <- rbind(
 
 res <- as.data.frame(res)
 
-pdf("Figure2.pdf", height = 6, width=7.5)
+pdf("figures/Figure2.pdf", height = 6, width = 7.5)
 
 par(mar = c(4, 8, 2, 3))
 
