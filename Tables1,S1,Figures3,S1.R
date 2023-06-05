@@ -7,17 +7,14 @@ library(phytools)
 library(geiger)
 library(ggplot2)
 library(maptools)
-library(tidyverse)
 library(stringi)
 library(raster)
 library(rgdal)
 library(sf)
 library(fasterize)
-library(data.table)
 library(caper)
 library(patchwork)
 library(terra)
-library(largeList)
 library(dplyr)
 library(rgeos)
 
@@ -59,7 +56,7 @@ map2_sq2 <- raster::subset(map_sq2, map_sq2$sci_name %in% names_sq)
 map2_av <- raster::subset(map_av, map_av$sci_name %in% names_av)
 map2_ma <- raster::subset(map_ma, map_ma$sci_name %in% names_ma)
 
-ages_sq <- ages_sq[ages_sq$Species %in% map_sq$sci_name, ]
+ages_am <- ages_sq[ages_am$Species %in% map_am$sci_name, ]
 ages_sq1 <- ages_sq[ages_sq$Species %in% map_sq1$sci_name, ]
 ages_sq2 <- ages_sq[ages_sq$Species %in% map_sq2$sci_name, ]
 ages_av <- ages_av[ages_av$Species %in% map_av$sci_name, ]
@@ -72,7 +69,7 @@ ages_ma <- ages_ma[ages_ma$Species %in% map_ma$sci_name, ]
 #save(map2_ma, file = "data/map2_ma.RData")
 
 # Loading phylogenies
-tr_sq <- read.nexus("~/Documents/lab/data/trees/amphibia_VertLife_27JUL20.nex")
+tr_am <- read.nexus("~/Documents/lab/data/trees/amphibia_VertLife_27JUL20.nex")
 for (i in 1:length(tr_sq)) tr_sq[[i]] <- drop.tip(tr_sq[[i]], "Homo_sapiens")
 tr_sq <- read.nexus("~/Documents/lab/data/trees/squamata_VertLife_27JUL20.nex")
 tr_av <- read.nexus("~/Documents/lab/data/trees/aves_Ericson_VertLife_27JUL20.nex")
@@ -316,13 +313,13 @@ getVarSpp <- function(maps, ages, path) {
   
 }
 
-env_sq <- getVarSpp(map_sq, ages_sq, "/Volumes/Personal/lab/spp_ages/amphibia")
+env_am <- getVarSpp(map_am, ages_am, "/Volumes/Personal/lab/spp_ages/amphibia")
 env_sq1 <- getVarSpp(map_sq1, ages_sq1, "/Volumes/Personal/lab/spp_ages/squamata")
 env_sq2 <- getVarSpp(map_sq2, ages_sq2, "/Volumes/Personal/lab/spp_ages/squamata")
 env_av <- getVarSpp(map_av, ages_av, "/Volumes/Personal/lab/spp_ages/aves")
 env_ma <- getVarSpp(map_ma, ages_ma, "/Volumes/Personal/lab/spp_ages/mammalia")
 
-#env_sq <- read.csv("data/ClimSpp_Amphibia_6_Apr_2023_15-27.csv", row.names = 1)
+#env_am <- read.csv("data/ClimSpp_Amphibia_6_Apr_2023_15-27.csv", row.names = 1)
 #env_sq1 <- read.csv("data/ClimSpp_Squamata_6_Apr_2023_13-21.csv", row.names = 1)
 #env_sq2 <- read.csv("data/ClimSpp_Squamata_6_Apr_2023_14-17.csv", row.names = 1)
 #env_av <- read.csv("data/ClimSpp_Aves_Apr_2023_19-46_NA.csv", row.names = 1)
@@ -330,7 +327,7 @@ env_ma <- getVarSpp(map_ma, ages_ma, "/Volumes/Personal/lab/spp_ages/mammalia")
 
 env_sq <- rbind(env_sq1, env_sq2)
 
-comp_sq <- lapply(tr_sq, comparative.data, data = cbind(env_sq, rownames(env_sq)), names.col = "rownames(env_sq)")
+comp_am <- lapply(tr_am, comparative.data, data = cbind(env_am, rownames(env_am)), names.col = "rownames(env_am)")
 comp_sq <- lapply(tr_sq, comparative.data, data = cbind(env_sq, rownames(env_sq)), names.col = "rownames(env_sq)") 
 comp_av <- lapply(tr_av, comparative.data, data = cbind(env_av, rownames(env_av)), names.col = "rownames(env_av)") 
 comp_ma <- lapply(tr_ma, comparative.data, data = cbind(env_ma, rownames(env_ma)), names.col = "rownames(env_ma)") 
@@ -568,9 +565,8 @@ res_pgls[2, ] <- apply(res_int_sq, 2, stats)
 res_pgls[3, ] <- apply(res_int_av, 2, stats)
 res_pgls[4, ] <- apply(res_int_ma, 2, stats)
 
-write.csv(res_pgls, "tables/Tables1,S1_unformatted.csv")
-
-###### Processing the rasters on QGIS to get average values of ages per cell
+###### Processing the geographic data on QGIS to get average values of ages
+###### per cell
 
 # Function to convert raster to be plotted by ggplot2
 get_values <- function(full) {
@@ -585,7 +581,6 @@ get_values <- function(full) {
   full_p <- rasterToPoints(full, spatial = TRUE)
   full_df  <- data.frame(full_p)
   colnames(full_df)[1] <- "index_1"
-  #full_df <- full_df %>% mutate(index_2 = cut(index_1, breaks = brks))
 
   return(full_df)
 } 
@@ -608,10 +603,6 @@ raster_temp2 <- get_values(raster(tempStability2))
 raster_prec1 <- get_values(raster(precStability1))
 raster_prec2 <- get_values(raster(precStability2))
 
-paltemp <- c("#FFC971", "#FFB627", "#FF9505", "#E2711D", "#CC5803")
-palprec <- c("#A9D6E5", "#89C2D9", "#468FAF", "#2A6F97", "#01497C", "#012A4A")
-palages <- c("#CAD2C5", "#84A98C", "#52796F", "#354F52", "#2F3E46")
-
 r <- raster(ncols = 144, nrows = 72, ymn = -90)
 
 ras_wrld1 <- rasterToPoints(rasterize(wrld_simpl, r), spatial = TRUE)
@@ -620,39 +611,39 @@ ras_wrld1  <- data.frame(ras_wrld1)
 temp1 <- ggplot() + 
   geom_raster(data = ras_wrld1, aes(x = x, y = y), fill = "gray", show.legend = FALSE) +
   geom_raster(data = raster_temp1, aes(x = x, y = y, fill = index_1)) +
-  scale_fill_gradientn(colours = paltemp, name = "Temperature\nstability") +
+  scale_fill_gradientn(colours = inferno(100), name = "Temperature\nstability") +
   theme_void() 
 
 prec1 <- ggplot() + 
   geom_raster(data = ras_wrld1, aes(x = x, y = y), fill = "gray", show.legend = FALSE) +
   geom_raster(data = raster_prec1, aes(x = x, y = y, fill = index_1)) +
-  scale_fill_gradientn(colours = palprec, name = "Precipitation\nstability") +
+  scale_fill_gradientn(colours = inferno(100), name = "Precipitation\nstability") +
   theme_void()
 
 plot1_am <- ggplot() +
   geom_raster(data = ras_wrld1, aes(x = x, y = y), fill = "gray", show.legend = FALSE) +
   geom_raster(data = raster1_am, aes(x = x, y = y, fill = index_1)) +
-  scale_fill_gradientn(colours = palages, name = "Ages") +
+  scale_fill_gradientn(colours = viridis(100), name = "Ages") +
   theme_void()
 
 plot1_sq <- ggplot() +
   geom_raster(data = ras_wrld1, aes(x = x, y = y), fill = "gray", show.legend = FALSE) +
   geom_raster(data = raster1_sq, aes(x = x, y = y, fill = index_1)) +
-  scale_fill_gradientn(colours = palages, name = "Ages") +
+  scale_fill_gradientn(colours = viridis(100), name = "Ages") +
   theme_void() 
 
 
 plot1_av <- ggplot() +
   geom_raster(data = ras_wrld1, aes(x = x, y = y), fill = "gray", show.legend = FALSE) +
   geom_raster(data = raster1_av, aes(x = x, y = y, fill = index_1)) +
-  scale_fill_gradientn(colours = palages, name = "Ages") +
+  scale_fill_gradientn(colours = viridis(100), name = "Ages") +
   theme_void() 
 
 
 plot1_ma <- ggplot() +
   geom_raster(data = ras_wrld1, aes(x = x, y = y), fill = "gray", show.legend = FALSE) +
   geom_raster(data = raster1_ma, aes(x = x, y = y, fill = index_1)) +
-  scale_fill_gradientn(colours = palages, name = "Ages") +
+  scale_fill_gradientn(colours = viridis(100), name = "Ages") +
   theme_void() 
 
 r_2 <- raster(ncols = 360, nrows = 149, ymn = -65)
@@ -663,39 +654,39 @@ ras_wrld2  <- data.frame(ras_wrld2)
 temp2 <- ggplot() + 
   geom_raster(data = ras_wrld2, aes(x = x, y = y), fill = "gray", show.legend = FALSE) +
   geom_raster(data = raster_temp2, aes(x = x, y = y, fill = index_1)) +
-  scale_fill_gradientn(colours = paltemp, name = "Temperature\nstability") +
+  scale_fill_gradientn(colours = inferno(100), name = "Temperature\nstability") +
   theme_void() 
 
 prec2 <- ggplot() + 
   geom_raster(data = ras_wrld2, aes(x = x, y = y), fill = "gray", show.legend = FALSE) +
   geom_raster(data = raster_prec2, aes(x = x, y = y, fill = index_1)) +
-  scale_fill_gradientn(colours = palprec, name = "Precipitation\nstability") +
+  scale_fill_gradientn(colours = inferno(100), name = "Precipitation\nstability") +
   theme_void()
 
 plot2_am <- ggplot() +
   geom_raster(data = ras_wrld2, aes(x = x, y = y), fill = "gray", show.legend = FALSE) +
   geom_raster(data = raster2_am, aes(x = x, y = y, fill = index_1)) +
-  scale_fill_gradientn(colours = palages, name = "Ages") +
+  scale_fill_gradientn(colours = viridis(100), name = "Ages") +
   theme_void() 
 
 plot2_sq <- ggplot() +
   geom_raster(data = ras_wrld2, aes(x = x, y = y), fill = "gray", show.legend = FALSE) +
   geom_raster(data = raster2_sq, aes(x = x, y = y, fill = index_1)) +
-  scale_fill_gradientn(colours = palages, name = "Ages") +
+  scale_fill_gradientn(colours = viridis(100), name = "Ages") +
   theme_void() 
 
 
 plot2_av <- ggplot() +
   geom_raster(data = ras_wrld2, aes(x = x, y = y), fill = "gray", show.legend = FALSE) +
   geom_raster(data = raster2_av, aes(x = x, y = y, fill = index_1)) +
-  scale_fill_gradientn(colours = palages, name = "Ages") +
+  scale_fill_gradientn(colours = viridis(100), name = "Ages") +
   theme_void() 
 
 
 plot2_ma <- ggplot() +
   geom_raster(data = ras_wrld2, aes(x = x, y = y), fill = "gray", show.legend = FALSE) +
   geom_raster(data = raster2_ma, aes(x = x, y = y, fill = index_1)) +
-  scale_fill_gradientn(colours = palages, name = "Ages") +
+  scale_fill_gradientn(colours = viridis(100), name = "Ages") +
   theme_void() 
 
 pdf("figures/Figure3.pdf", width = 11)

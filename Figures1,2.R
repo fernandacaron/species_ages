@@ -74,8 +74,8 @@ tip_ages <- function(tree, class) {
 }
 
 # Loading the phylogenies and taxonomies that were used to produce them
-tr_sq <- read.nexus("~/Documents/lab/data/trees/amphibia_VertLife_27JUL20.nex")
-for (i in 1:length(tr_sq)) tr_sq[[i]] <- drop.tip(tr_sq[[i]], "Homo_sapiens")
+tr_am <- read.nexus("~/Documents/lab/data/trees/amphibia_VertLife_27JUL20.nex")
+for (i in 1:length(tr_am)) tr_am[[i]] <- drop.tip(tr_am[[i]], "Homo_sapiens")
 tr_sq <- read.nexus("~/Documents/lab/data/trees/squamata_VertLife_27JUL20.nex")
 tr_av <- read.nexus("~/Documents/lab/data/trees/aves_Ericson_VertLife_27JUL20.nex")
 tr_ma <- read.nexus("~/Documents/lab/data/trees/mammalia_node_dated_VertLife_27JUL20.nex")
@@ -230,7 +230,7 @@ for (i in 1:length(tr_sq)) {
 	tr2_sq[[i]] <- drop.tip(tr_sq[[i]], sample(tr_sq[[i]]$tip.label)[1:p2_sq])
 	tr3_sq[[i]] <- drop.tip(tr_sq[[i]], sample(tr_sq[[i]]$tip.label)[1:p3_sq])
 }
-class(tr1_sq) <- class(tr2_sq) <- class(tr3_sq) <-"multiPhylo"
+class(tr1_sq) <- class(tr2_sq) <- class(tr3_sq) <- "multiPhylo"
 
 ages1_squamata <- tip_ages(tr1_sq, "Reptilia")
 colnames(ages1_squamata) <- c("Class", "Taxon", "Genus", "Species", 
@@ -255,7 +255,7 @@ for (i in 1:length(tr_av)) {
 	tr2_av[[i]] <- drop.tip(tr_av[[i]], sample(tr_av[[i]]$tip.label)[1:p2_av])
 	tr3_av[[i]] <- drop.tip(tr_av[[i]], sample(tr_av[[i]]$tip.label)[1:p3_av])
 }
-class(tr1_av) <- class(tr2_av) <- class(tr3_av) <-"multiPhylo"
+class(tr1_av) <- class(tr2_av) <- class(tr3_av) <- "multiPhylo"
 
 ages1_aves <- tip_ages(tr1_av, "Aves")
 colnames(ages1_aves) <- c("Class", "Taxon", "Genus", "Species", 1:length(tr_av))
@@ -277,7 +277,7 @@ for (i in 1:length(tr_ma)) {
 	tr2_ma[[i]] <- drop.tip(tr_ma[[i]], sample(tr_ma[[i]]$tip.label)[1:p2_ma])
 	tr3_ma[[i]] <- drop.tip(tr_ma[[i]], sample(tr_ma[[i]]$tip.label)[1:p3_ma])
 }
-class(tr1_ma) <- class(tr2_ma) <- class(tr3_ma) <-"multiPhylo"
+class(tr1_ma) <- class(tr2_ma) <- class(tr3_ma) <- "multiPhylo"
 
 ages1_mammalia <- tip_ages(tr1_ma, "Mammalia")
 colnames(ages1_mammalia) <- c("Class", "Taxon", "Genus", "Species", 
